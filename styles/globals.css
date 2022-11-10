@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --shadow-panel-height: 10px;
+        --shadow-panel-blur: 10px;
+        --color-shelf-top-section: #ae8750;
+        --color-shelf-back-panel: #a17941;
+        --color-shelf-bottom-panel: #795832;
+        --color-shelf-bottom-panel-front: #9b7d50;
+        --color-shelf-side-panel: #956e39;
+        --color-shelf-shadow: #653b17;
+    }
+}

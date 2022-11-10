@@ -1,0 +1,50 @@
+.cuboid__container {
+    // 10rem for height matches the height of the books container
+    --height: 10rem;
+    --width: 100vw;
+    --depth: 10rem;
+    perspective: 1300px;
+    width: var(--width);
+    height: var(--height);
+    position: absolute;
+    overflow: hidden;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-shelf-side-panel);
+
+    .cuboid {
+        position: relative;
+        transform-style: preserve-3d;
+        width: var(--width);
+        height: var(--height);
+        // transform: rotate3d(1, 1, 0, 45deg);
+    }
+
+    .cuboid__face {
+        position: absolute;
+        width: var(--width);
+        height: var(--height);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cuboid__face--back {
+        --extra-height: 2rem;
+        transform: translateZ(calc(var(--depth) * -1)) translateY(calc(var(--extra-height) * -1)) rotateY(180deg);
+        background-color: var(--color-shelf-back-panel);
+        // we want the back face to rise above its normal height to give the effect that it is covered
+        // by the horizontal panel above it
+        height: calc(var(--height) + var(--extra-height));
+    }
+
+    .cuboid__face--bottom {
+        background-color: var(--color-shelf-bottom-panel);
+        transform: translateZ(calc(var(--depth) * 0.5 * -1)) translateY(calc(var(--height) * 0.5)) rotateX(-90deg);
+        height: var(--depth);
+    }
+}
+
+.floor-thickness {
+    background-color: var(--color-shelf-bottom-panel-front);
+}
