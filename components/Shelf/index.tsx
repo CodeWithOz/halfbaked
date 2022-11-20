@@ -43,3 +43,8 @@ export default function Shelf({ children }: { children: React.ReactNode }) {
     </section>
   )
 }
+
+export const shelfSideSpace = 48;
+
+// corresponds to gap-12
+export const interBookSpace = 48;
