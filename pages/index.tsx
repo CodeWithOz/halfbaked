@@ -75,7 +75,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main ref={ref}>
+      <main ref={ref} className="flex flex-col min-h-screen">
         <section className='flex justify-center items-center py-3 2xl:py-7 bg-[var(--color-shelf-top-section)] text-amber-900 relative z-10 text-xl lg:text-3xl 2xl:text-6xl font-bold'>
           <h1>
             My Book Shelf
@@ -84,16 +84,7 @@ export default function Home() {
         <>
           {renderShelves(books, shelfSize.width)}
         </>
-        <section>
-          <Shelf>
-            {[1, 2, 3, 4, 5, 6].map((book) => (<div className='h-32 w-24 bg-slate-200 shadow shadow-black' key={book}>Book {book}</div>))}
-          </Shelf>
-        </section>
-        <section>
-          <Shelf>
-            {[1, 2, 3, 4, 5, 6].map((book) => (<div className='h-32 w-24 bg-slate-200 shadow shadow-black' key={book}>Book {book}</div>))}
-          </Shelf>
-        </section>
+        <section className='grow bg-[var(--color-shelf-bottom-panel-front)]'></section>
       </main>
     </div>
   )
