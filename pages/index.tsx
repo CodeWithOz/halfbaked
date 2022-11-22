@@ -1,6 +1,7 @@
 import { useRef, ReactFragment, useState, RefObject } from 'react'
 import Head from 'next/head'
 import Shelf, { shelfSideSpace, interBookSpace } from '../components/Shelf'
+import Book from '../components/Book'
 import useResizeObserver from '@react-hook/resize-observer'
 
 const useSize = (ref: RefObject<HTMLElement>) => {
@@ -30,7 +31,7 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
     return acc;
   }, [] as BookDetails[][]);
 
-  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<div className='h-32 w-24 bg-slate-200 shadow shadow-black' key={`book-${i}`}>{book.title}</div>))}</Shelf>)
+  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} key={`book-${i}`}></Book>))}</Shelf>)
 }
 
 const books: BookDetails[] = [
