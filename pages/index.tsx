@@ -1,8 +1,11 @@
-import { useRef, ReactFragment, useState, RefObject } from 'react'
+import { useRef, ReactFragment, useState, RefObject, FC } from 'react'
+import { GetStaticProps } from 'next'
 import Head from 'next/head'
 import Shelf, { shelfSideSpace, interBookSpace } from '../components/Shelf'
 import Book from '../components/Book'
 import useResizeObserver from '@react-hook/resize-observer'
+import prisma from '@/lib/prisma'
+import { Book as BookType, Author as AuthorType } from '@prisma/client'
 
 const useSize = (ref: RefObject<HTMLElement>) => {
   const [size, setSize] = useState({ width: 0, height: 0 })
@@ -31,11 +34,11 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
     return acc;
   }, [] as BookDetails[][]);
 
-  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} coverUrl='/book-covers/eloquent-javascript.jpg' key={`book-${i}`}></Book>))}</Shelf>)
-  // return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} key={`book-${i}`}></Book>))}</Shelf>)
+  // return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} coverUrl='/book-covers/eloquent-javascript.jpg' key={`book-${i}`}></Book>))}</Shelf>)
+  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} key={`book-${i}`}></Book>))}</Shelf>)
 }
 
-const books: BookDetails[] = [
+/* const books: BookDetails[] = [
   {
     title: 'The Hobbit',
     author: 'J.R.R. Tolkien',
@@ -72,8 +75,22 @@ const books: BookDetails[] = [
     coverUrl: '/book-covers/eloquent-javascript.jpg',
   },
 ];
+ */
+export const getStaticProps: GetStaticProps = async () => {
+  const books = await prisma.book.findMany({
+    include: {
+      author: true
+    }
+  })
+  console.log('findMany books', books)
 
-export default function Home() {
+  return {
+    props: { books },
+    revalidate: 10,
+  };
+}
+
+const Home: FC<Props> = ({ books }) => {
   const ref = useRef<HTMLElement>(null);
   const shelfSize = useSize(ref);
 
@@ -99,8 +116,13 @@ export default function Home() {
   )
 }
 
-interface BookDetails {
-  title: string
-  author: string
-  coverUrl: string
+export default Home
+
+type Props = {
+  books: BookDetails[]
+}
+
+interface BookDetails extends BookType {
+  author: AuthorType
+  // coverUrl: string
 }
