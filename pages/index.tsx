@@ -35,7 +35,7 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
   }, [] as BookDetails[][]);
 
   // return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} coverUrl='/book-covers/eloquent-javascript.jpg' key={`book-${i}`}></Book>))}</Shelf>)
-  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} key={`book-${i}`}></Book>))}</Shelf>)
+  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} authors={book.authors} key={`book-${i}`}></Book>))}</Shelf>)
 }
 
 /* const books: BookDetails[] = [
@@ -79,7 +79,7 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
 export const getStaticProps: GetStaticProps = async () => {
   const books = await prisma.book.findMany({
     include: {
-      author: true
+      authors: true
     }
   })
   console.log('findMany books', books)
@@ -123,6 +123,6 @@ type Props = {
 }
 
 interface BookDetails extends BookType {
-  author: AuthorType
+  authors: AuthorType[]
   // coverUrl: string
 }
