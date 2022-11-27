@@ -41,12 +41,17 @@ export const getStaticProps: GetStaticProps = async () => {
   const books = await prisma.book.findMany({
     include: {
       authors: true
-    }
+    },
+    orderBy: [
+      {
+        finishedOn: 'desc'
+      }
+    ]
   })
   console.log('findMany books', books)
 
   return {
-    props: { books },
+    props: { books: JSON.parse(JSON.stringify(books)) },
     revalidate: 10,
   };
 }
@@ -83,6 +88,7 @@ type Props = {
   books: BookDetails[]
 }
 
-interface BookDetails extends BookType {
+interface BookDetails extends Omit<BookType, 'finishedOn'> {
+  finishedOn: string
   authors: AuthorType[]
 }
