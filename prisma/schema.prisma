@@ -15,6 +15,7 @@ model Book {
   title     String
   authors    Author[]
   authorId  Int
+  coverUrl  String @default("")
 }
 
 model Author {

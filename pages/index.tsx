@@ -34,48 +34,9 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
     return acc;
   }, [] as BookDetails[][]);
 
-  // return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} author={book.author} coverUrl='/book-covers/eloquent-javascript.jpg' key={`book-${i}`}></Book>))}</Shelf>)
-  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} authors={book.authors} key={`book-${i}`}></Book>))}</Shelf>)
+  return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} authors={book.authors} coverUrl={book.coverUrl} key={`book-${i}`}></Book>))}</Shelf>)
 }
 
-/* const books: BookDetails[] = [
-  {
-    title: 'The Hobbit',
-    author: 'J.R.R. Tolkien',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-  {
-    title: 'A Game Of Thrones',
-    author: 'George R.R. Martin',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-  {
-    title: 'A Dance With Dragons',
-    author: 'George R.R. Martin',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-  {
-    title: 'The Fellowship Of The Ring',
-    author: 'J.R.R. Tolkien',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-  {
-    title: 'The Two Towers',
-    author: 'J.R.R. Tolkien',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-  {
-    title: 'The Return Of The King',
-    author: 'J.R.R. Tolkien',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-  {
-    title: 'The Silmarillion',
-    author: 'J.R.R. Tolkien',
-    coverUrl: '/book-covers/eloquent-javascript.jpg',
-  },
-];
- */
 export const getStaticProps: GetStaticProps = async () => {
   const books = await prisma.book.findMany({
     include: {
@@ -124,5 +85,4 @@ type Props = {
 
 interface BookDetails extends BookType {
   authors: AuthorType[]
-  // coverUrl: string
 }
