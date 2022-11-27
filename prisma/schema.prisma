@@ -16,6 +16,7 @@ model Book {
   authors    Author[]
   authorId  Int
   coverUrl  String @default("")
+  finishedOn DateTime @default(now())
 }
 
 model Author {
