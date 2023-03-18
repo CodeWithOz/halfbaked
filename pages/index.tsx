@@ -37,7 +37,45 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
   return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} authors={book.authors} coverUrl={book.coverUrl} key={`book-${i}`}></Book>))}</Shelf>)
 }
 
+const delay = time => new Promise(res => setTimeout(() => {
+  res(time);
+}, time))
+
 export const getStaticProps: GetStaticProps = async () => {
+  let counter = 0
+  // update/insert authors and books
+  // for (let {bookId, authorIds} of [
+  //   {
+  //     bookId: 63,
+  //     authorIds: [82],
+  //   },
+  // ]) {
+  //   counter += 1
+  //   await delay(100 * counter)
+  //   prisma.book.update({
+  //     where: {
+  //       id: bookId,
+  //     },
+  //     data: {
+  //       authors: {
+  //         connect: authorIds.map(id => ({ id: id }))
+  //       },
+  //     },
+  //   }).then(res => {
+  //     console.log(`outcome of updating ${bookId} with ${authorIds}:`, res)
+  //   }).catch(err => {
+  //     console.error(`error while updating ${bookId} with ${authorIds}:`, err)
+  //   })
+  // }
+  // const insertedAuthors = await prisma.author.createMany({
+  //   data: [
+  //     {
+  //       name: 'Sun Tzu',
+  //     },
+  //   ],
+  //   skipDuplicates: true
+  // })
+  // console.log('insertedAuthors', insertedAuthors)
   const books = await prisma.book.findMany({
     include: {
       authors: true
@@ -48,7 +86,6 @@ export const getStaticProps: GetStaticProps = async () => {
       }
     ]
   })
-  console.log('findMany books', books)
 
   return {
     props: { books: JSON.parse(JSON.stringify(books)) },
