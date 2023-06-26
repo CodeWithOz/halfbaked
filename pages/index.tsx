@@ -1,19 +1,21 @@
-import { useRef, ReactFragment, useState, RefObject, FC } from 'react'
-import { GetStaticProps } from 'next'
-import Head from 'next/head'
-import Shelf, { shelfSideSpace, interBookSpace } from '../components/Shelf'
-import Book from '../components/Book'
-import useResizeObserver from '@react-hook/resize-observer'
-import prisma from '@/lib/prisma'
-import { Book as BookType, Author as AuthorType } from '@prisma/client'
+import { useRef, ReactFragment, useState, RefObject, FC } from 'react';
+import { GetStaticProps } from 'next';
+import Head from 'next/head';
+import Shelf, { shelfSideSpace, interBookSpace } from '../components/Shelf';
+import Book from '../components/Book';
+import useResizeObserver from '@react-hook/resize-observer';
+import prisma from '@/lib/prisma';
+import { Book as BookType, Author as AuthorType } from '@prisma/client';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const useSize = (ref: RefObject<HTMLElement>) => {
-  const [size, setSize] = useState({ width: 0, height: 0 })
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
   // update the state with the new size whenever the size changes
-  useResizeObserver(ref, (entry) => setSize(entry.contentRect))
-  return size
-}
+  useResizeObserver(ref, (entry) => setSize(entry.contentRect));
+  return size;
+};
 
 // 96px is the width of the w-24 class in tailwind
 // see here: https://tailwindcss.com/docs/width
@@ -35,14 +37,14 @@ const renderShelves = (books: BookDetails[], shelfWidth: number): ReactFragment 
   }, [] as BookDetails[][]);
 
   return shelves.map((shelf: BookDetails[], i: number) => <Shelf key={`shelf-${i}`}>{shelf.map((book: BookDetails, i: number) => (<Book title={book.title} authors={book.authors} coverUrl={book.coverUrl} key={`book-${i}`}></Book>))}</Shelf>)
-}
+};
 
-const delay = time => new Promise(res => setTimeout(() => {
-  res(time);
-}, time))
+const delay = (time: number) => new Promise<void>(res => setTimeout(() => {
+  res();
+}, time));
 
 export const getStaticProps: GetStaticProps = async () => {
-  let counter = 0
+  let counter = 0;
   // update/insert authors and books
   // for (let {bookId, authorIds} of [
   //   {
@@ -85,17 +87,39 @@ export const getStaticProps: GetStaticProps = async () => {
         finishedOn: 'desc'
       }
     ]
-  })
+  });
 
   return {
     props: { books: JSON.parse(JSON.stringify(books)) },
     revalidate: 10,
   };
-}
+};
 
 const Home: FC<Props> = ({ books }) => {
   const ref = useRef<HTMLElement>(null);
   const shelfSize = useSize(ref);
+
+  const [selectedDateRange, setSelectedDateRange] = useState<[Date, Date] | null>(getDefaultDateRange());
+
+  function getDefaultDateRange(): [Date, Date] {
+    const currentYear = new Date().getFullYear();
+    const startDate = new Date(currentYear, 0, 1); // January 1st of the current year
+    const endDate = new Date(currentYear, 11, 31); // December 31st of the current year
+    return [startDate, endDate];
+  }
+
+  function handleDateRangeChange(dateRange: [Date, Date] | null) {
+    setSelectedDateRange(dateRange);
+  }
+
+  // Filter the books based on the selected date range
+  const filteredBooks = selectedDateRange
+    ? books.filter(book => {
+      const finishedOn = new Date(book.finishedOn);
+      const [startDate, endDate] = selectedDateRange;
+      return finishedOn >= startDate && finishedOn <= endDate;
+    })
+    : books;
 
   return (
     <div>
@@ -110,22 +134,33 @@ const Home: FC<Props> = ({ books }) => {
             My Book Shelf
           </h1>
         </section>
+        <div className="flex justify-center items-center my-4">
+          <DatePicker
+            selected={selectedDateRange ? selectedDateRange[0] : null}
+            startDate={selectedDateRange ? selectedDateRange[0] : null}
+            endDate={selectedDateRange ? selectedDateRange[1] : null}
+            onChange={dates => handleDateRangeChange(dates as [Date, Date])}
+            selectsRange
+            isClearable
+            placeholderText="Select date range"
+          />
+        </div>
         <>
-          {renderShelves(books, shelfSize.width)}
+          {renderShelves(filteredBooks, shelfSize.width)}
         </>
         <section className='grow bg-[var(--color-shelf-bottom-panel-front)]'></section>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
 
 type Props = {
-  books: BookDetails[]
-}
+  books: BookDetails[];
+};
 
 interface BookDetails extends Omit<BookType, 'finishedOn'> {
-  finishedOn: string
-  authors: AuthorType[]
+  finishedOn: string;
+  authors: AuthorType[];
 }
