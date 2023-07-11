@@ -48,8 +48,10 @@ export const getStaticProps: GetStaticProps = async () => {
   // update/insert authors and books
   // for (let {bookId, authorIds} of [
   //   {
-  //     bookId: 63,
-  //     authorIds: [82],
+  //     bookId: 73,
+  //     authorIds: [
+  //       95,
+  //     ],
   //   },
   // ]) {
   //   counter += 1
@@ -69,15 +71,40 @@ export const getStaticProps: GetStaticProps = async () => {
   //     console.error(`error while updating ${bookId} with ${authorIds}:`, err)
   //   })
   // }
-  // const insertedAuthors = await prisma.author.createMany({
+  // const insertedBooks = await prisma.book.createMany({
   //   data: [
   //     {
-  //       name: 'Sun Tzu',
+  //       title: 'The Alchemy of Air',
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/the-alchemy-of-air.jpeg'
+  //     },
+  //     {
+  //       title: "Don't Be Evil",
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/dont-be-evil.jpeg'
+  //     },
+  //     {
+  //       title: "Iron, Fire and Ice",
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/iron-fire-and-ice.jpeg'
+  //     },
+  //     {
+  //       title: "Deep Purpose",
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/deep-purpose.jpeg'
+  //     },
+  //     {
+  //       title: "The Joy of X",
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/the-joy-of-x.jpeg'
+  //     },
+  //     {
+  //       title: "Layered Money",
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/layered-money.jpeg'
+  //     },
+  //     {
+  //       title: "Don't Tell Me I Can't",
+  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/dont-tell-me-i-cant.jpeg'
   //     },
   //   ],
   //   skipDuplicates: true
   // })
-  // console.log('insertedAuthors', insertedAuthors)
+  // console.log('insertedBooks', insertedBooks)
   const books = await prisma.book.findMany({
     include: {
       authors: true
