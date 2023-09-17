@@ -9,6 +9,90 @@ import { Book as BookType, Author as AuthorType } from '@prisma/client';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
+async function customUpsertBook(book: BookEntry) {
+  // Check if a book with the given title and authors exists
+  const existingBook = await prisma.book.findFirst({
+    where: {
+      title: book.title,
+      authors: {
+        every: {
+          name: { in: book.authors.map(author => author.name) } // Ensure every author in the book's authors array exists for this book
+        }
+      }
+    }
+  });
+
+  if (existingBook) {
+    // If the book exists, update it (if necessary)
+    return await prisma.book.update({
+      where: { id: existingBook.id },
+      data: { coverUrl: book.coverUrl } // or any other fields you want to update
+    });
+  } else {
+    // If the book doesn't exist, create it
+    // This part might be more complex if you need to handle relations or other operations
+    return await prisma.book.create({
+      data: {
+        title: book.title,
+        coverUrl: book.coverUrl,
+      }
+    });
+  }
+}
+
+async function customUpsertAuthor(author: AuthorEntry) {
+  // Check if a author with the given name exists
+  const existingAuthor = await prisma.author.findFirst({
+    where: {
+      name: author.name,
+    }
+  });
+
+  if (existingAuthor) {
+    // If the author exists, update it (if necessary)
+    return await prisma.author.update({
+      where: { id: existingAuthor.id },
+      data: { name: author.name } // or any other fields you want to update
+    });
+  } else {
+    // If the author doesn't exist, create it
+    // This part might be more complex if you need to handle relations or other operations
+    return await prisma.author.create({
+      data: {
+        name: author.name,
+      }
+    });
+  }
+}
+
+async function upsertBooksAndAuthors(books: BookEntry[]) {
+  const insertedBooks = []
+  for (const book of books) {
+    // Upsert the book based on title
+    const upsertedBook = await customUpsertBook(book);
+    insertedBooks.push(upsertedBook);
+
+    // Iterate over the authors and associate them with the book
+    for (const author of book.authors) {
+      // Upsert the author based on name
+      const upsertedAuthor = await customUpsertAuthor(author);
+
+      // Associate the author with the book
+      await prisma.book.update({
+        where: { id: upsertedBook.id },
+        data: {
+          authors: {
+            connect: { id: upsertedAuthor.id },
+          },
+        },
+      });
+    }
+  }
+
+  return insertedBooks;
+}
+
+
 const useSize = (ref: RefObject<HTMLElement>) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -44,66 +128,38 @@ const delay = (time: number) => new Promise<void>(res => setTimeout(() => {
 }, time));
 
 export const getStaticProps: GetStaticProps = async () => {
-  let counter = 0;
-  // update/insert authors and books
-  // for (let {bookId, authorIds} of [
+  // const insertedBooks = await upsertBooksAndAuthors([
   //   {
-  //     bookId: 73,
-  //     authorIds: [
-  //       95,
-  //     ],
-  //   },
-  // ]) {
-  //   counter += 1
-  //   await delay(100 * counter)
-  //   prisma.book.update({
-  //     where: {
-  //       id: bookId,
-  //     },
-  //     data: {
-  //       authors: {
-  //         connect: authorIds.map(id => ({ id: id }))
+  //     title: 'Manias, Panics, and Crashes (Seventh Edition)',
+  //     coverUrl: 'https://halfbaked-media.s3.amazonaws.com/manias-panics-and-crashes.jpeg',
+  //     authors: [
+  //       {
+  //         name: 'Robert Z. Aliber'
   //       },
-  //     },
-  //   }).then(res => {
-  //     console.log(`outcome of updating ${bookId} with ${authorIds}:`, res)
-  //   }).catch(err => {
-  //     console.error(`error while updating ${bookId} with ${authorIds}:`, err)
-  //   })
-  // }
-  // const insertedBooks = await prisma.book.createMany({
-  //   data: [
-  //     {
-  //       title: 'The Alchemy of Air',
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/the-alchemy-of-air.jpeg'
-  //     },
-  //     {
-  //       title: "Don't Be Evil",
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/dont-be-evil.jpeg'
-  //     },
-  //     {
-  //       title: "Iron, Fire and Ice",
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/iron-fire-and-ice.jpeg'
-  //     },
-  //     {
-  //       title: "Deep Purpose",
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/deep-purpose.jpeg'
-  //     },
-  //     {
-  //       title: "The Joy of X",
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/the-joy-of-x.jpeg'
-  //     },
-  //     {
-  //       title: "Layered Money",
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/layered-money.jpeg'
-  //     },
-  //     {
-  //       title: "Don't Tell Me I Can't",
-  //       coverUrl: 'https://halfbaked-media.s3.amazonaws.com/dont-tell-me-i-cant.jpeg'
-  //     },
-  //   ],
-  //   skipDuplicates: true
-  // })
+  //       {
+  //         name: 'Charles P. Kindleberger'
+  //       },
+  //     ]
+  //   },
+  //   {
+  //     title: 'Story',
+  //     coverUrl: 'https://halfbaked-media.s3.amazonaws.com/story.jpeg',
+  //     authors: [
+  //       {
+  //         name: 'Robert McKee'
+  //       },
+  //     ]
+  //   },
+  //   {
+  //     title: 'The Steal Like an Artist Audio Trilogy',
+  //     coverUrl: 'https://halfbaked-media.s3.amazonaws.com/the-steal-like-an-artist-audio-trilogy.jpeg',
+  //     authors: [
+  //       {
+  //         name: 'Austin Kleon'
+  //       },
+  //     ]
+  //   },
+  // ]);
   // console.log('insertedBooks', insertedBooks)
   const books = await prisma.book.findMany({
     include: {
@@ -201,3 +257,6 @@ interface BookDetails extends Omit<BookType, 'finishedOn'> {
   finishedOn: string;
   authors: AuthorType[];
 }
+
+interface AuthorEntry { name: string }
+interface BookEntry { title: string, coverUrl: string, authors: AuthorEntry[] }
