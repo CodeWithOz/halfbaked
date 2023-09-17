@@ -143,7 +143,7 @@ const Home: FC<Props> = ({ books }) => {
   }
 
   // Filter the books based on the selected date range
-  const filteredBooks = selectedDateRange
+  const filteredBooks = selectedDateRange && selectedDateRange.filter(date => date !== null).length === 2
     ? books.filter(book => {
       const finishedOn = new Date(book.finishedOn);
       const [startDate, endDate] = selectedDateRange;
