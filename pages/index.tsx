@@ -135,8 +135,11 @@ const Home: FC<Props> = ({ books }) => {
     return [startDate, endDate];
   }
 
-  function handleDateRangeChange(dateRange: [Date, Date] | null) {
-    setSelectedDateRange(dateRange);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  function handleDateRangeChange(dates: [Date, Date] | null) {
+    setSelectedDateRange(dates);
+    setShowDatePicker(false);  // Close the date picker after selection
   }
 
   // Filter the books based on the selected date range
@@ -160,18 +163,24 @@ const Home: FC<Props> = ({ books }) => {
           <h1>
             My Book Shelf
           </h1>
+          <button onClick={() => setShowDatePicker(!showDatePicker)} className="bg-[var(--color-shelf-side-panel)] rounded p-2 shadow-md">
+            🗓️
+          </button>
         </section>
-        <div className="flex justify-center items-center my-4">
-          <DatePicker
-            selected={selectedDateRange ? selectedDateRange[0] : null}
-            startDate={selectedDateRange ? selectedDateRange[0] : null}
-            endDate={selectedDateRange ? selectedDateRange[1] : null}
-            onChange={dates => handleDateRangeChange(dates as [Date, Date])}
-            selectsRange
-            isClearable
-            placeholderText="Select date range"
-          />
-        </div>
+        {showDatePicker && (
+          <div className={`flex justify-center items-center py-3 bg-[var(--color-shelf-side-panel)] border border-[var(--color-shelf-top-section)]`}>
+            <DatePicker
+              className={"bg-[var(--color-shelf-side-panel)] px-8"}
+              selected={selectedDateRange ? selectedDateRange[0] : null}
+              startDate={selectedDateRange ? selectedDateRange[0] : null}
+              endDate={selectedDateRange ? selectedDateRange[1] : null}
+              onChange={dates => handleDateRangeChange(dates as [Date, Date])}
+              selectsRange
+              isClearable
+              placeholderText="Select date range"
+            />
+          </div>
+        )}
         <>
           {renderShelves(filteredBooks, shelfSize.width)}
         </>
