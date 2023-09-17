@@ -164,7 +164,7 @@ const Home: FC<Props> = ({ books }) => {
           <h1>
             My Book Shelf
           </h1>
-          <button onClick={() => setShowDatePicker(!showDatePicker)} className="bg-[var(--color-shelf-side-panel)] rounded p-2 shadow-md">
+          <button onClick={() => setShowDatePicker(!showDatePicker)} className="bg-[var(--color-shelf-side-panel)] rounded p-2 shadow-md absolute right-2">
             🗓️
           </button>
         </section>
