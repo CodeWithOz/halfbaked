@@ -139,7 +139,8 @@ const Home: FC<Props> = ({ books }) => {
 
   function handleDateRangeChange(dates: [Date, Date] | null) {
     setSelectedDateRange(dates);
-    setShowDatePicker(false);  // Close the date picker after selection
+    // Close the date picker after selection or clearing the choice, else keep it open
+    setShowDatePicker(dates.filter(date => date !== null).length == 1);
   }
 
   // Filter the books based on the selected date range
