@@ -98,15 +98,7 @@ const Home: FC<Props> = ({ books }) => {
   const ref = useRef<HTMLElement>(null);
   const shelfSize = useSize(ref);
 
-  const [selectedDateRange, setSelectedDateRange] = useState<[Date, Date] | null>(getDefaultDateRange());
-
-  function getDefaultDateRange(): [Date, Date] {
-    const currentYear = new Date().getFullYear();
-    const startDate = new Date(currentYear, 0, 1); // January 1st of the current year
-    const endDate = new Date(currentYear, 11, 31); // December 31st of the current year
-    return [startDate, endDate];
-  }
-
+  const [selectedDateRange, setSelectedDateRange] = useState<[Date, Date] | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   function handleDateRangeChange(dates: [Date, Date] | null) {
