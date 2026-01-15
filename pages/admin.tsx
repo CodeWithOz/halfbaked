@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
 import DatePicker from 'react-datepicker';
@@ -9,6 +10,8 @@ type FormMode = { mode: 'create' } | { mode: 'edit'; bookId: number };
 type Message = { type: 'success' | 'error'; text: string } | null;
 
 export default function Admin() {
+  const router = useRouter();
+
   // Form state
   const [title, setTitle] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
@@ -20,6 +23,15 @@ export default function Admin() {
   const [books, setBooks] = useState<BookWithAuthors[]>([]);
   const [message, setMessage] = useState<Message>(null);
   const [loading, setLoading] = useState(false);
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/admin-logout', { method: 'POST' });
+      router.push('/admin-login');
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to logout' });
+    }
+  }
 
   // Fetch books on mount
   useEffect(() => {
@@ -157,7 +169,15 @@ export default function Admin() {
       </Head>
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Book Management</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Book Management</h1>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
 
         {/* Message Banner */}
         {message && (
