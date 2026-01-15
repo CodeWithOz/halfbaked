@@ -43,10 +43,14 @@ The application uses Prisma ORM with PostgreSQL. The schema defines two main mod
   - Date picker for filtering books by completion date
   - Default date range is current year (Jan 1 - Dec 31)
 
-- **pages/admin.tsx**: Admin page for adding books
-  - Contains `upsertBooksAndAuthors` function for inserting/updating books
-  - Handles many-to-many author relationships
-  - **Note**: This page runs on client-side and directly calls Prisma, which will fail in production since Prisma is backend-only
+- **pages/p/[id]/index.tsx**: Admin dashboard (protected)
+  - Full CRUD operations for books
+  - Uses dynamic route with server-side validation
+  - Only accessible at `/p/{ADMIN_PATH}` where path matches env var
+
+- **pages/p/[id]/login.tsx**: Admin login page
+  - Password-based authentication
+  - Sets HTTP-only cookie on successful login
 
 ### Components
 
@@ -83,6 +87,8 @@ Add new domains to `next.config.mjs` remotePatterns if needed.
 
 Required in `.env`:
 - `DATABASE_URL`: PostgreSQL connection string for Prisma
+- `ADMIN_PATH`: Secret URL path segment for admin access (required, no default)
+- `ADMIN_PASSWORD`: Password for admin authentication
 
 ## Key Implementation Patterns
 
@@ -103,10 +109,24 @@ The date picker implementation:
 - Closes after both dates selected or picker cleared
 - Shows all books when date range is not fully set
 
-### Book/Author Upsert Logic
+### Admin Security (Path Obfuscation)
 
-The `upsertBooksAndAuthors` function in `pages/admin.tsx`:
-- Upserts books by title
-- Upserts authors by name
-- Creates many-to-many relationships using Prisma's `connect`
-- Runs sequentially (not transactional)
+The admin interface uses a multi-layered security approach:
+
+1. **Secret URL Path**: The admin is only accessible at `/p/{ADMIN_PATH}` where `ADMIN_PATH` is an environment variable. There are no hardcoded paths like `/admin` in the codebase.
+
+2. **Dynamic Route Validation**: Pages at `pages/p/[id]/` use `getServerSideProps` to validate the `id` parameter matches `ADMIN_PATH`. Non-matching paths return 404.
+
+3. **API Route Validation**: API endpoints at `pages/api/p/[id]/` validate the path segment before processing requests. Invalid paths return 404.
+
+4. **Password Authentication**: Even with the correct path, users must authenticate with `ADMIN_PASSWORD` via a login form.
+
+5. **HTTP-only Cookies**: Auth state is stored in HTTP-only cookies to prevent XSS attacks.
+
+**Why this approach**: The source code is public, so we can't hardcode secret paths. By using environment variables and dynamic routes with server-side validation:
+- Scanning the codebase reveals nothing about the admin URL
+- Brute-forcing `/p/{random}` returns 404 for incorrect guesses
+- API enumeration doesn't reveal admin-related endpoints
+- Even finding the path requires knowing the password
+
+**Important**: `ADMIN_PATH` has no fallback value. The app will throw an error if it's not set, ensuring the admin cannot accidentally be exposed at a default path.

@@ -4,13 +4,46 @@ import Head from 'next/head';
 import Image from 'next/image';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { BookWithAuthors } from '../types/book';
+import { GetServerSideProps } from 'next';
+import { BookWithAuthors } from '../../../types/book';
+import { validateAuthToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 
 type FormMode = { mode: 'create' } | { mode: 'edit'; bookId: number };
 type Message = { type: 'success' | 'error'; text: string } | null;
 
-export default function Admin() {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params as { id: string };
+  const adminPath = process.env.ADMIN_PATH;
+
+  // If env vars not configured, return 404 to avoid exposing configuration issues
+  if (!adminPath) {
+    console.error('ADMIN_PATH environment variable is not set');
+    return { notFound: true };
+  }
+
+  if (id !== adminPath) {
+    return { notFound: true };
+  }
+
+  // Validate auth cookie (defense in depth - middleware also checks this)
+  const cookies = context.req.cookies;
+  const authToken = cookies[AUTH_COOKIE_NAME];
+
+  if (!validateAuthToken(authToken)) {
+    return {
+      redirect: {
+        destination: `/p/${adminPath}/login`,
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
+};
+
+export default function AdminDashboard() {
   const router = useRouter();
+  const { id } = router.query;
 
   // Form state
   const [title, setTitle] = useState('');
@@ -26,8 +59,11 @@ export default function Admin() {
 
   async function handleLogout() {
     try {
-      await fetch('/api/admin-logout', { method: 'POST' });
-      router.push('/admin-login');
+      const response = await fetch(`/api/p/${id}/logout`, { method: 'POST' });
+      const data = await response.json();
+      if (data.redirectTo) {
+        router.push(data.redirectTo);
+      }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to logout' });
     }
@@ -164,7 +200,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>Admin - Book Management</title>
+        <title>Book Management</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 

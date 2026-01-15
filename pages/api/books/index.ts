@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
+import { isAuthenticated } from '@/lib/auth';
 import { CreateBookRequest, BookWithAuthors, ApiResponse } from '../../../types/book';
 
 export default async function handler(
@@ -7,8 +8,13 @@ export default async function handler(
   res: NextApiResponse<ApiResponse<BookWithAuthors | BookWithAuthors[]>>
 ) {
   if (req.method === 'GET') {
+    // GET is public - allows the main page to display books
     return handleGet(req, res);
   } else if (req.method === 'POST') {
+    // POST requires authentication
+    if (!isAuthenticated(req.cookies)) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
     return handlePost(req, res);
   } else {
     return res.status(405).json({ success: false, error: 'Method not allowed' });

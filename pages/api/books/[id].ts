@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
+import { isAuthenticated } from '@/lib/auth';
 import { UpdateBookRequest, BookWithAuthors, ApiResponse } from '../../../types/book';
 
 export default async function handler(
@@ -19,10 +20,19 @@ export default async function handler(
   }
 
   if (req.method === 'GET') {
+    // GET is public - allows reading individual book data
     return handleGet(bookId, req, res);
   } else if (req.method === 'PUT') {
+    // PUT requires authentication
+    if (!isAuthenticated(req.cookies)) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
     return handlePut(bookId, req, res);
   } else if (req.method === 'DELETE') {
+    // DELETE requires authentication
+    if (!isAuthenticated(req.cookies)) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
     return handleDelete(bookId, req, res);
   } else {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
