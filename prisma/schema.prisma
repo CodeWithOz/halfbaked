@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,15 +8,15 @@ datasource db {
 }
 
 model Book {
-  id        Int      @id @default(autoincrement())
-  title     String
-  authors    Author[]
-  coverUrl  String @default("")
+  id         Int      @id @default(autoincrement())
+  title      String
+  coverUrl   String   @default("")
   finishedOn DateTime @default(now())
+  authors    Author[] @relation("AuthorToBook")
 }
 
 model Author {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  books     Book[]
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  books Book[] @relation("AuthorToBook")
 }
