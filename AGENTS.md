@@ -88,7 +88,8 @@ Add new domains to `next.config.mjs` remotePatterns if needed.
 Required in `.env`:
 - `DATABASE_URL`: PostgreSQL connection string for Prisma
 - `ADMIN_PATH`: Secret URL path segment for admin access (required, no default)
-- `ADMIN_PASSWORD`: Password for admin authentication
+- `ADMIN_PASSWORD`: Password for admin authentication (required)
+- `AUTH_SECRET`: HMAC-SHA256 signing secret for authentication tokens (required, min 32 chars recommended; generate with `openssl rand -hex 32`)
 
 ## Key Implementation Patterns
 
@@ -111,17 +112,39 @@ The date picker implementation:
 
 ### Admin Security (Path Obfuscation)
 
-The admin interface uses a multi-layered security approach:
+The admin interface uses a defense-in-depth security approach with multiple layers:
+
+#### Security Layers
 
 1. **Secret URL Path**: The admin is only accessible at `/p/{ADMIN_PATH}` where `ADMIN_PATH` is an environment variable. There are no hardcoded paths like `/admin` in the codebase.
 
-2. **Dynamic Route Validation**: Pages at `pages/p/[id]/` use `getServerSideProps` to validate the `id` parameter matches `ADMIN_PATH`. Non-matching paths return 404.
+2. **Middleware Enforcement** (`middleware.ts`): Intercepts all `/p/*` and `/api/p/*` requests, validates the path segment against `ADMIN_PATH`, and checks authentication tokens before allowing access.
 
-3. **API Route Validation**: API endpoints at `pages/api/p/[id]/` validate the path segment before processing requests. Invalid paths return 404.
+3. **Server-Side Validation** (`getServerSideProps`): Pages at `pages/p/[id]/` re-validate the path parameter, providing defense-in-depth even if middleware is bypassed.
 
-4. **Password Authentication**: Even with the correct path, users must authenticate with `ADMIN_PASSWORD` via a login form.
+4. **API Route Validation**: API endpoints at `pages/api/p/[id]/` and protected routes in `pages/api/books/` validate authentication before processing write operations.
 
-5. **HTTP-only Cookies**: Auth state is stored in HTTP-only cookies to prevent XSS attacks.
+#### Token-Based Authentication
+
+- **HMAC-SHA256 Signed Tokens**: Auth tokens are signed using `AUTH_SECRET` (see `lib/auth.ts`). Token format: `{timestamp}.{signature}`.
+- **24-Hour Expiry**: Tokens expire after 24 hours (`COOKIE_MAX_AGE`). Future timestamps are also rejected.
+- **HTTP-only Cookies**: Tokens are stored in HTTP-only cookies with `SameSite=Strict` to prevent XSS and CSRF attacks.
+
+#### Timing-Safe Comparisons
+
+All password and token validations use `crypto.timingSafeEqual` to prevent timing attacks:
+- `validatePassword()` in `lib/auth.ts` for login
+- `validateAuthToken()` in `lib/auth.ts` for session validation
+- `timingSafeCompare()` in `middleware.ts` for Edge runtime
+
+#### Key Files
+
+- `middleware.ts` - Route protection and token validation (Edge runtime)
+- `lib/auth.ts` - Token generation, validation, and password checking
+- `pages/p/[id]/index.tsx` - Admin dashboard with `getServerSideProps` auth check
+- `pages/p/[id]/login.tsx` - Login page
+- `pages/api/p/[id]/auth.ts` - Login API endpoint
+- `pages/api/p/[id]/logout.ts` - Logout API endpoint
 
 **Why this approach**: The source code is public, so we can't hardcode secret paths. By using environment variables and dynamic routes with server-side validation:
 - Scanning the codebase reveals nothing about the admin URL
@@ -129,4 +152,4 @@ The admin interface uses a multi-layered security approach:
 - API enumeration doesn't reveal admin-related endpoints
 - Even finding the path requires knowing the password
 
-**Important**: `ADMIN_PATH` has no fallback value. The app will throw an error if it's not set, ensuring the admin cannot accidentally be exposed at a default path.
+**Important**: `ADMIN_PATH`, `ADMIN_PASSWORD`, and `AUTH_SECRET` have no fallback values. The app will error if they're not set, ensuring secure defaults.

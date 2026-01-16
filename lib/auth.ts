@@ -8,9 +8,9 @@ export const COOKIE_MAX_AGE = 60 * 60 * 24; // 24 hours in seconds
  * The token is based on a timestamp, making it unique per session.
  */
 export function generateAuthToken(): string {
-  const secret = process.env.ADMIN_PASSWORD;
+  const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    throw new Error('ADMIN_PASSWORD environment variable is not set');
+    throw new Error('AUTH_SECRET environment variable is not set');
   }
 
   const timestamp = Date.now().toString();
@@ -31,7 +31,7 @@ export function validateAuthToken(token: string | undefined): boolean {
     return false;
   }
 
-  const secret = process.env.ADMIN_PASSWORD;
+  const secret = process.env.AUTH_SECRET;
   if (!secret) {
     return false;
   }
@@ -43,9 +43,10 @@ export function validateAuthToken(token: string | undefined): boolean {
 
   const [timestamp, providedSignature] = parts;
 
-  // Check if token is expired (older than COOKIE_MAX_AGE)
+  // Check if token is expired or has invalid timestamp
   const tokenAge = Date.now() - parseInt(timestamp, 10);
-  if (isNaN(tokenAge) || tokenAge > COOKIE_MAX_AGE * 1000) {
+  // Reject: NaN, negative (future timestamps), or expired tokens
+  if (isNaN(tokenAge) || tokenAge < 0 || tokenAge > COOKIE_MAX_AGE * 1000) {
     return false;
   }
 

@@ -31,15 +31,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  return { props: {} };
+  // Pass the admin path as a prop so client doesn't need router.query
+  return { props: { adminPath } };
 };
 
-export default function Login() {
+interface LoginProps {
+  adminPath: string;
+}
+
+export default function Login({ adminPath }: LoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { id } = router.query;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -47,7 +51,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/p/${id}/auth`, {
+      const response = await fetch(`/api/p/${adminPath}/auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

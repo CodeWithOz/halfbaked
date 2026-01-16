@@ -10,7 +10,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { id } = req.query;
+  // Normalize id to string (req.query.id can be string | string[] | undefined)
+  const rawId = req.query.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const adminPath = process.env.ADMIN_PATH;
 
   if (!adminPath) {
@@ -20,6 +22,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (!process.env.ADMIN_PASSWORD) {
     console.error('ADMIN_PASSWORD environment variable is not set');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  if (!process.env.AUTH_SECRET) {
+    console.error('AUTH_SECRET environment variable is not set');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
