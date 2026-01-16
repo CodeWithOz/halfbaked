@@ -43,10 +43,14 @@ The application uses Prisma ORM with PostgreSQL. The schema defines two main mod
   - Date picker for filtering books by completion date
   - Default date range is current year (Jan 1 - Dec 31)
 
-- **pages/admin.tsx**: Admin page for adding books
-  - Contains `upsertBooksAndAuthors` function for inserting/updating books
-  - Handles many-to-many author relationships
-  - **Note**: This page runs on client-side and directly calls Prisma, which will fail in production since Prisma is backend-only
+- **pages/p/[id]/index.tsx**: Admin dashboard (protected)
+  - Full CRUD operations for books
+  - Uses dynamic route with server-side validation
+  - Only accessible at `/p/{ADMIN_PATH}` where path matches env var
+
+- **pages/p/[id]/login.tsx**: Admin login page
+  - Password-based authentication
+  - Sets HTTP-only cookie on successful login
 
 ### Components
 
@@ -83,6 +87,9 @@ Add new domains to `next.config.mjs` remotePatterns if needed.
 
 Required in `.env`:
 - `DATABASE_URL`: PostgreSQL connection string for Prisma
+- `ADMIN_PATH`: Secret URL path segment for admin access (required, no default)
+- `ADMIN_PASSWORD`: Password for admin authentication (required)
+- `AUTH_SECRET`: HMAC-SHA256 signing secret for authentication tokens (required, min 32 chars recommended; generate with `openssl rand -hex 32`)
 
 ## Key Implementation Patterns
 
@@ -103,10 +110,46 @@ The date picker implementation:
 - Closes after both dates selected or picker cleared
 - Shows all books when date range is not fully set
 
-### Book/Author Upsert Logic
+### Admin Security (Path Obfuscation)
 
-The `upsertBooksAndAuthors` function in `pages/admin.tsx`:
-- Upserts books by title
-- Upserts authors by name
-- Creates many-to-many relationships using Prisma's `connect`
-- Runs sequentially (not transactional)
+The admin interface uses a defense-in-depth security approach with multiple layers:
+
+#### Security Layers
+
+1. **Secret URL Path**: The admin is only accessible at `/p/{ADMIN_PATH}` where `ADMIN_PATH` is an environment variable. There are no hardcoded paths like `/admin` in the codebase.
+
+2. **Middleware Enforcement** (`middleware.ts`): Intercepts all `/p/*` and `/api/p/*` requests, validates the path segment against `ADMIN_PATH`, and checks authentication tokens before allowing access.
+
+3. **Server-Side Validation** (`getServerSideProps`): Pages at `pages/p/[id]/` re-validate the path parameter, providing defense-in-depth even if middleware is bypassed.
+
+4. **API Route Validation**: API endpoints at `pages/api/p/[id]/` and protected routes in `pages/api/books/` validate authentication before processing write operations.
+
+#### Token-Based Authentication
+
+- **HMAC-SHA256 Signed Tokens**: Auth tokens are signed using `AUTH_SECRET` (see `lib/auth.ts`). Token format: `{timestamp}.{signature}`.
+- **24-Hour Expiry**: Tokens expire after 24 hours (`COOKIE_MAX_AGE`). Future timestamps are also rejected.
+- **HTTP-only Cookies**: Tokens are stored in HTTP-only cookies with `SameSite=Strict` to prevent XSS and CSRF attacks.
+
+#### Timing-Safe Comparisons
+
+All password and token validations use `crypto.timingSafeEqual` to prevent timing attacks:
+- `validatePassword()` in `lib/auth.ts` for login
+- `validateAuthToken()` in `lib/auth.ts` for session validation
+- `timingSafeCompare()` in `middleware.ts` for Edge runtime
+
+#### Key Files
+
+- `middleware.ts` - Route protection and token validation (Edge runtime)
+- `lib/auth.ts` - Token generation, validation, and password checking
+- `pages/p/[id]/index.tsx` - Admin dashboard with `getServerSideProps` auth check
+- `pages/p/[id]/login.tsx` - Login page
+- `pages/api/p/[id]/auth.ts` - Login API endpoint
+- `pages/api/p/[id]/logout.ts` - Logout API endpoint
+
+**Why this approach**: The source code is public, so we can't hardcode secret paths. By using environment variables and dynamic routes with server-side validation:
+- Scanning the codebase reveals nothing about the admin URL
+- Brute-forcing `/p/{random}` returns 404 for incorrect guesses
+- API enumeration doesn't reveal admin-related endpoints
+- Even finding the path requires knowing the password
+
+**Important**: `ADMIN_PATH`, `ADMIN_PASSWORD`, and `AUTH_SECRET` have no fallback values. The app will error if they're not set, ensuring secure defaults.
