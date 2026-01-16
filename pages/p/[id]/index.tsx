@@ -56,6 +56,8 @@ export default function AdminDashboard() {
   const [books, setBooks] = useState<BookWithAuthors[]>([]);
   const [message, setMessage] = useState<Message>(null);
   const [loading, setLoading] = useState(false);
+  const [booksLoading, setBooksLoading] = useState(true);
+  const [booksError, setBooksError] = useState(false);
 
   async function handleLogout() {
     try {
@@ -83,16 +85,20 @@ export default function AdminDashboard() {
   }, [message]);
 
   async function fetchBooks() {
+    setBooksLoading(true);
+    setBooksError(false);
     try {
       const response = await fetch('/api/books');
       const data = await response.json();
       if (data.success) {
         setBooks(data.data);
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to fetch books' });
+        setBooksError(true);
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Network error while fetching books' });
+      setBooksError(true);
+    } finally {
+      setBooksLoading(false);
     }
   }
 
@@ -361,10 +367,47 @@ export default function AdminDashboard() {
 
           {/* Book List Section */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Existing Books ({books.length})</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Existing Books {!booksLoading && !booksError && `(${books.length})`}
+            </h2>
 
             <div className="space-y-4 max-h-[600px] overflow-y-auto">
-              {books.length === 0 ? (
+              {booksLoading ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <svg
+                    className="animate-spin h-8 w-8 text-blue-600 mb-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <p className="text-gray-500">Loading books...</p>
+                </div>
+              ) : booksError ? (
+                <div className="text-center py-8">
+                  <p className="text-red-600 mb-3">Something went wrong while loading books.</p>
+                  <button
+                    onClick={fetchBooks}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : books.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No books yet. Add your first book!</p>
               ) : (
                 books.map((book) => (
