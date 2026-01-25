@@ -1,6 +1,6 @@
 # Half-Baked
 
-A personal book collection app that displays books on a visual 3D bookshelf. Built with Next.js, Prisma, and PostgreSQL.
+A personal book collection app that displays books on a visual 3D bookshelf. Built with Next.js, Prisma, and PostgreSQL. Read the blog post [here](https://incodethismeans.com/building-a-book-shelf-with-html-and-css).
 
 ## Features
 
@@ -96,5 +96,4 @@ prisma/
 ```
 
 ## License
-
-Private project.
+MIT License
